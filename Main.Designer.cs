@@ -81,7 +81,7 @@
             this.Controls.Add(this.vScrollBar1);
             this.Controls.Add(this.gMapControl1);
             this.Name = "Main";
-            this.Text = "Form1";
+            this.Text = "Mapping Nearest Distance by Carvajal";
             this.Load += new System.EventHandler(this.Main_Load);
             this.ResumeLayout(false);
 
