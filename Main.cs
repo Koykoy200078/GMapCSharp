@@ -244,24 +244,63 @@ namespace Map
                 markers.AddRange(overlay.Markers.OfType<CustomMarker>());
             }
 
-            markers = markers.OrderBy(m => GetDistance(startPoint, m.Position)).ToList();
+            // Find the "ME" marker
+            CustomMarker startMarker = markers.FirstOrDefault(m => m.Label == "ME");
+            if (startMarker == null)
+            {
+                return;
+            }
+
+            markers = markers
+                .Where(m => m.Label != "ME")
+                .OrderBy(m => GetDistance(startMarker.Position, m.Position))
+                .ToList();
+
+            // Create a queue for BFS
+            Queue<CustomMarker> queue = new Queue<CustomMarker>();
+            HashSet<CustomMarker> visited = new HashSet<CustomMarker>();
+
+            // Start BFS from the nearest marker
+            if (markers.Count > 0)
+            {
+                queue.Enqueue(markers[0]);
+            }
 
             int labelIndex = 0;
             double previousDistance = -1;
-            foreach (var marker in markers)
+            while (queue.Count > 0)
             {
-                if (marker.Label != "ME")
+                CustomMarker currentMarker = queue.Dequeue();
+                if (!visited.Contains(currentMarker))
                 {
-                    double distance = GetDistance(startPoint, marker.Position);
-                    if (Math.Abs(distance - previousDistance) > 0.0001)
+                    visited.Add(currentMarker);
+
+                    double currentDistance = GetDistance(startPoint, currentMarker.Position);
+                    if (Math.Abs(currentDistance - previousDistance) > 0.0001)
                     {
-                        previousDistance = distance;
+                        previousDistance = currentDistance;
+                        currentMarker.Label = GetLabelFromIndex(labelIndex);
+                        labelIndex++;
                     }
-                    marker.Label = GetLabelFromIndex(labelIndex);
-                    labelIndex++;
-                    marker.IsBold = true;
-                    marker.Distance = distance;
-                    marker.DistanceMiles = distance * 0.621371;
+                    else
+                    {
+                        currentMarker.Label = GetLabelFromIndex(labelIndex - 1);
+                    }
+
+                    currentMarker.IsBold = true;
+                    currentMarker.Distance = currentDistance;
+                    currentMarker.DistanceMiles = currentMarker.Distance * 0.621371;
+
+                    // Get neighbors (markers sorted by distance from the "ME" marker)
+                    var neighbors = markers
+                        .Where(m => m != currentMarker && !visited.Contains(m))
+                        .OrderBy(m => GetDistance(startMarker.Position, m.Position))
+                        .ToList();
+
+                    foreach (var neighbor in neighbors)
+                    {
+                        queue.Enqueue(neighbor);
+                    }
                 }
             }
 
@@ -279,6 +318,7 @@ namespace Map
             }
             return label;
         }
+
 
         private void DrawRoute(PointLatLng start, PointLatLng end)
         {
