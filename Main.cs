@@ -1,124 +1,64 @@
-﻿using GMap.NET;
-using GMap.NET.WindowsForms.Markers;
-using GMap.NET.WindowsForms;
-using GMap.NET.WindowsForms.ToolTips;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Map
 {
     public partial class Main : Form
     {
-        private PointLatLng currentLocation;
-        private GMapOverlay routesOverlay;
         private DataTable dataTable;
-        private double currentZoom;
         private int currentLabelIndex = 0;
+        private List<CustomMarker> markers = new List<CustomMarker>();
 
         public Main()
         {
             InitializeComponent();
             this.KeyPreview = true;
-            this.KeyDown += new KeyEventHandler(Main_KeyDown);
         }
 
         private void Main_Load(object sender, EventArgs e)
         {
-            GMap.NET.GMaps.Instance.Mode = GMap.NET.AccessMode.ServerAndCache;
-            gMapControl1.Dock = DockStyle.Fill;
-            gMapControl1.MapProvider = GMap.NET.MapProviders.GoogleMapProvider.Instance;
-            double lat, lon;
-
-            // base location
-            lat = 9.312421855653751;
-            lon = 123.3031670697597;
-            currentLocation = new PointLatLng(lat, lon);
-            currentZoom = 17;
-            gMapControl1.Position = currentLocation;
-            gMapControl1.Zoom = currentZoom;
-
-            GMapOverlay o = new GMapOverlay("markers");
-            CustomMarker m = new CustomMarker(currentLocation, "ME", true, 0, 0, Color.Blue);
-
-            gMapControl1.Overlays.Add(o);
-            o.Markers.Add(m);
-            gMapControl1.Invalidate();
-            gMapControl1.Update();
-
-            routesOverlay = new GMapOverlay("routes");
-            gMapControl1.Overlays.Add(routesOverlay);
+            //pictureBox1.Image = Image.FromFile("C:\\Users\\Franc\\Desktop\\asasasa.png");
+            pictureBox1.Paint += new PaintEventHandler(pictureBox1_Paint);
 
             dataTable = createData();
-            // Capitol
-            dataTable.Rows.Add(1, 9.312890082352915, 123.30204284842539);
-            // Chowking atbang norsu
-            dataTable.Rows.Add(2, 9.31240470295932, 123.30443396578242);
-            // CSIT Department
-            dataTable.Rows.Add(3, 9.312421855653751, 123.3031670697597);
-            // Perpetual Church
-            dataTable.Rows.Add(4, 9.311154310990707, 123.30318733469414);
-            // NORSU Amphitheater
-            dataTable.Rows.Add(5, 9.31175480896306, 123.30271839711514);
-            // Silliman University
-            dataTable.Rows.Add(6, 9.310792780359494, 123.30551112932926);
-            // Tree Hive Guest House
-            dataTable.Rows.Add(7, 9.311965856407708, 123.30448271671895);
-            // Lamberto L. Macias Sports and Cultural Centre
-            dataTable.Rows.Add(8, 9.311961561006411, 123.30071728724853);
-            // Negros Oriental Legislative Building
-            dataTable.Rows.Add(9, 9.313148521548118, 123.301766593118);
-            // Oval
-            dataTable.Rows.Add(10, 9.313551858126656, 123.3002320993571);
-            // Chinese Cemetery
-            dataTable.Rows.Add(11, 9.314633290396607, 123.3004201386834);
-            // NOHS
-            dataTable.Rows.Add(12, 9.314404347183334, 123.3021496361891);
-            // Cang's
-            dataTable.Rows.Add(13, 9.315522430533528, 123.30231446078363);
-            // Hashtag
-            dataTable.Rows.Add(14, 9.310575415055684, 123.3003008835393);
-            // INC
-            dataTable.Rows.Add(15, 9.312412318006196, 123.29808886246813);
-            // Dgte Memorial Park
-            dataTable.Rows.Add(16, 9.311873205642943, 123.29544108432437);
-            // Grub Hub Grill
-            dataTable.Rows.Add(17, 9.313542469741405, 123.29828089100849);
-            // Cathedral
-            dataTable.Rows.Add(18, 9.305306991742452, 123.30719544671067);
-            // Quezon Park
-            dataTable.Rows.Add(19, 9.305591471774553, 123.3082035965478);
-            // Boulevard
-            dataTable.Rows.Add(20, 9.306889053100818, 123.31031221763563);
-            // Lee Plaza
-            dataTable.Rows.Add(21, 9.307822661822064, 123.30709573958372);
-            // Police Station
-            dataTable.Rows.Add(22, 9.307064887868925, 123.30452920428395);
-            // Asian College
-            dataTable.Rows.Add(23, 9.30697765379174, 123.3019552832711);
-            // National Museum
-            dataTable.Rows.Add(24, 9.30519219749348, 123.30935207493307);
-            // Octagon
-            dataTable.Rows.Add(25, 9.30409185625435, 123.30776045376166);
-            // Unitop
-            dataTable.Rows.Add(26, 9.306672220467592, 123.30750564665992);
-            // Port of Dumaguete
-            dataTable.Rows.Add(27, 9.312721846023248, 123.31090676753956);
-            // Silliman University High School
-            dataTable.Rows.Add(28, 9.314267432141783, 123.30790078231084);
-            // Silliman University Medical Center
-            dataTable.Rows.Add(29, 9.316286750827999, 123.30390511152788);
-            // Tourism Office
-            dataTable.Rows.Add(30, 9.321192193492783, 123.30193312613278);
+            // Location Nodes
+            dataTable.Rows.Add(1, 932, 492);
+            dataTable.Rows.Add(2, 698, 416);
+            dataTable.Rows.Add(3, 371, 301);
+            dataTable.Rows.Add(4, 1236, 659);
+            dataTable.Rows.Add(5, 932, 743);
+            dataTable.Rows.Add(6, 585, 636);
+            dataTable.Rows.Add(7, 462, 561);
+            dataTable.Rows.Add(8, 494, 688);
+            dataTable.Rows.Add(9, 135, 616);
+            dataTable.Rows.Add(10, 479, 203);
+            dataTable.Rows.Add(11, 705, 204);
+            dataTable.Rows.Add(12, 1524, 667);
+            dataTable.Rows.Add(13, 1182, 228);
+            dataTable.Rows.Add(14, 938, 116);
+            dataTable.Rows.Add(15, 1119, 580);
+            dataTable.Rows.Add(16, 1079, 705);
+            dataTable.Rows.Add(17, 1524, 779);
+            dataTable.Rows.Add(18, 1372, 359);
+            dataTable.Rows.Add(19, 326, 486);
+            dataTable.Rows.Add(20, 1517, 165);
+            dataTable.Rows.Add(21, 1097, 94);
+            dataTable.Rows.Add(22, 1317, 449);
+            dataTable.Rows.Add(23, 1415, 527);
+            dataTable.Rows.Add(24, 1370, 661);
+            dataTable.Rows.Add(25, 1437, 717);
+            dataTable.Rows.Add(26, 1197, 408);
+            dataTable.Rows.Add(27, 121, 182);
+            dataTable.Rows.Add(28, 110, 364);
+            dataTable.Rows.Add(29, 77, 806);
+            dataTable.Rows.Add(30, 217, 46);
+            // End Location Nodes
 
             LoadPredefinedData();
-            TagMarkers(currentLocation);
         }
 
         private void LoadPredefinedData()
@@ -127,294 +67,378 @@ namespace Map
             {
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    string id = row["id"].ToString();
-                    string lat = row["lat"].ToString();
-                    string lon = row["lon"].ToString();
+                    int id = Convert.ToInt32(row["id"]);
+                    int x = Convert.ToInt32(row["x"]);
+                    int y = Convert.ToInt32(row["y"]);
 
-                    double newLat = Convert.ToDouble(lat);
-                    double newLon = Convert.ToDouble(lon);
-
-                    GMapOverlay o = new GMapOverlay("markers");
-                    CustomMarker m = new CustomMarker(new PointLatLng(newLat, newLon), GetLabelFromIndex(currentLabelIndex), false, 0, 0, Color.Red);
-
-                    gMapControl1.Overlays.Add(o);
-                    o.Markers.Add(m);
-                    gMapControl1.Invalidate();
-                    gMapControl1.Update();
-
+                    CustomMarker m = new CustomMarker(new Point(x, y), GetLabelFromIndex(currentLabelIndex), false, Color.Red);
+                    markers.Add(m);
                     currentLabelIndex++;
                 }
-            }
-        }
 
-        private void Main_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.A)
-            {
-                int x = gMapControl1.Width / 2;
-                int y = gMapControl1.Height / 2;
-                double lat1, lon1;
-
-                GMapOverlay o = new GMapOverlay("markers");
-                gMapControl1.Overlays.Add(o);
-
-                lat1 = gMapControl1.FromLocalToLatLng(x, y).Lat;
-                lon1 = gMapControl1.FromLocalToLatLng(x, y).Lng;
-                CustomMarker m = new CustomMarker(new PointLatLng(lat1, lon1), GetLabelFromIndex(currentLabelIndex), false, 0, 0, Color.Red);
-                o.Markers.Add(m);
-                gMapControl1.Invalidate();
-                gMapControl1.Update();
-
-                currentLabelIndex++;
-            }
-        }
-
-        private void gMapControl1_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                PointLatLng clickedPoint = gMapControl1.FromLocalToLatLng(e.X, e.Y);
-                currentLocation = clickedPoint;
-                currentZoom = gMapControl1.Zoom;
-
-                foreach (var overlay in gMapControl1.Overlays)
+                // Initial connections
+                foreach (var marker in markers)
                 {
-                    var markerToRemove = overlay.Markers.OfType<CustomMarker>().FirstOrDefault(marker => marker.Label == "ME");
-                    if (markerToRemove != null)
+                    marker.NearestNeighbors = markers
+                        .Where(m => m != marker)
+                        .OrderBy(m => GetDistance(marker.Position, m.Position))
+                        .Take(3)
+                        .ToList();
+
+                    foreach (var neighbor in marker.NearestNeighbors)
                     {
-                        overlay.Markers.Remove(markerToRemove);
-                        break;
-                    }
-                }
-
-                // ME marker
-                GMapOverlay o = new GMapOverlay("markers");
-                CustomMarker meMarker = new CustomMarker(currentLocation, "ME", true, 0, 0, Color.Blue);
-                gMapControl1.Overlays.Add(o);
-                o.Markers.Add(meMarker);
-                gMapControl1.Invalidate();
-                gMapControl1.Update();
-
-                CustomMarker nearestMarker = null;
-                double minDistance = double.MaxValue;
-
-                foreach (var overlay in gMapControl1.Overlays)
-                {
-                    foreach (var marker in overlay.Markers.OfType<CustomMarker>())
-                    {
-                        double distance = GetDistance(currentLocation, marker.Position);
-                        if (distance < minDistance)
+                        if (!neighbor.NearestNeighbors.Contains(marker))
                         {
-                            minDistance = distance;
-                            nearestMarker = marker;
+                            neighbor.NearestNeighbors.Add(marker);
                         }
                     }
                 }
 
-                if (nearestMarker != null)
+                // Randomly select 10 nodes to partially disconnect
+                Random random = new Random();
+                List<CustomMarker> partiallyDisconnectedMarkers = new List<CustomMarker>();
+
+                while (partiallyDisconnectedMarkers.Count < 10)
                 {
-                    gMapControl1.Position = nearestMarker.Position;
-                    gMapControl1.Zoom = currentZoom;
-                    DrawRoute(currentLocation, nearestMarker.Position);
-                    TagMarkers(nearestMarker.Position);
-                }
-            }
-            else if (e.Button == MouseButtons.Right)
-            {
-                PointLatLng point = gMapControl1.FromLocalToLatLng(e.X, e.Y);
-                foreach (var overlay in gMapControl1.Overlays)
-                {
-                    var markerToRemove = overlay.Markers.OfType<CustomMarker>().FirstOrDefault(marker => marker.Position == point);
-                    if (markerToRemove != null)
+                    int randomIndex = random.Next(markers.Count);
+                    CustomMarker partiallyDisconnectedMarker = markers[randomIndex];
+                    if (!partiallyDisconnectedMarkers.Contains(partiallyDisconnectedMarker))
                     {
-                        overlay.Markers.Remove(markerToRemove);
-                        gMapControl1.Invalidate();
-                        gMapControl1.Update();
-                        break;
+                        partiallyDisconnectedMarkers.Add(partiallyDisconnectedMarker);
                     }
                 }
-            }
-        }
 
-        private void TagMarkers(PointLatLng startPoint)
-        {
-            List<CustomMarker> markers = new List<CustomMarker>();
-            foreach (var overlay in gMapControl1.Overlays)
-            {
-                markers.AddRange(overlay.Markers.OfType<CustomMarker>());
-            }
-
-            // Find the "ME" marker
-            CustomMarker startMarker = markers.FirstOrDefault(m => m.Label == "ME");
-            if (startMarker == null)
-            {
-                return;
-            }
-
-            markers = markers
-                .Where(m => m.Label != "ME")
-                .OrderBy(m => GetDistance(startMarker.Position, m.Position))
-                .ToList();
-
-            // Create a queue for BFS
-            Queue<CustomMarker> queue = new Queue<CustomMarker>();
-            HashSet<CustomMarker> visited = new HashSet<CustomMarker>();
-
-            // Start BFS from the nearest marker
-            if (markers.Count > 0)
-            {
-                queue.Enqueue(markers[0]);
-            }
-
-            int labelIndex = 0;
-            double previousDistance = -1;
-            while (queue.Count > 0)
-            {
-                CustomMarker currentMarker = queue.Dequeue();
-                if (!visited.Contains(currentMarker))
+                foreach (var marker in partiallyDisconnectedMarkers)
                 {
-                    visited.Add(currentMarker);
-
-                    double currentDistance = GetDistance(startPoint, currentMarker.Position);
-                    if (Math.Abs(currentDistance - previousDistance) > 0.0001)
+                    int disconnectCount = random.Next(1, 3);
+                    for (int i = 0; i < disconnectCount; i++)
                     {
-                        previousDistance = currentDistance;
-                        currentMarker.Label = GetLabelFromIndex(labelIndex);
-                        labelIndex++;
-                    }
-                    else
-                    {
-                        currentMarker.Label = GetLabelFromIndex(labelIndex - 1);
-                    }
-
-                    currentMarker.IsBold = true;
-                    currentMarker.Distance = currentDistance;
-                    currentMarker.DistanceMiles = currentMarker.Distance * 0.621371;
-
-                    // Get neighbors (markers sorted by distance from the "ME" marker)
-                    var neighbors = markers
-                        .Where(m => m != currentMarker && !visited.Contains(m))
-                        .OrderBy(m => GetDistance(startMarker.Position, m.Position))
-                        .ToList();
-
-                    foreach (var neighbor in neighbors)
-                    {
-                        queue.Enqueue(neighbor);
+                        if (marker.NearestNeighbors.Count > 1)
+                        {
+                            var neighborToRemove = marker.NearestNeighbors[random.Next(marker.NearestNeighbors.Count)];
+                            marker.NearestNeighbors.Remove(neighborToRemove);
+                            neighborToRemove.NearestNeighbors.Remove(marker);
+                        }
                     }
                 }
-            }
 
-            gMapControl1.Invalidate();
-            gMapControl1.Update();
+                pictureBox1.Invalidate();
+            }
         }
 
         private string GetLabelFromIndex(int index)
         {
-            string label = string.Empty;
-            while (index >= 0)
-            {
-                label = (char)('A' + index % 26) + label;
-                index = index / 26 - 1;
-            }
-            return label;
-        }
-
-
-        private void DrawRoute(PointLatLng start, PointLatLng end)
-        {
-            routesOverlay.Routes.Clear();
-            List<PointLatLng> points = new List<PointLatLng> { start, end };
-            GMapRoute route = new GMapRoute(points, "route")
-            {
-                Stroke = new Pen(Color.Red, 2)
-            };
-            routesOverlay.Routes.Add(route);
-            gMapControl1.Invalidate();
-            gMapControl1.Update();
-        }
-
-        private double GetDistance(PointLatLng point1, PointLatLng point2)
-        {
-            double lat1 = point1.Lat;
-            double lon1 = point1.Lng;
-            double lat2 = point2.Lat;
-            double lon2 = point2.Lng;
-
-            double dLat = (lat2 - lat1) * (Math.PI / 180.0);
-            double dLon = (lon2 - lon1) * (Math.PI / 180.0);
-
-            lat1 = lat1 * (Math.PI / 180.0);
-            lat2 = lat2 * (Math.PI / 180.0);
-
-            double a = Math.Pow(Math.Sin(dLat / 2), 2) + Math.Pow(Math.Sin(dLon / 2), 2) * Math.Cos(lat1) * Math.Cos(lat2);
-            double c = 2 * Math.Asin(Math.Sqrt(a));
-            double radius = 6371;
-
-            return radius * c;
-        }
-
-        private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
-        {
-            gMapControl1.Zoom = vScrollBar1.Value;
-            currentZoom = gMapControl1.Zoom;
+            return (index + 1).ToString();
         }
 
         private DataTable createData()
         {
             DataTable dt = new DataTable();
             dt.Columns.Add("id");
-            dt.Columns.Add("lat");
-            dt.Columns.Add("lon");
+            dt.Columns.Add("x");
+            dt.Columns.Add("y");
             dt.AcceptChanges();
             return dt;
         }
-    }
 
-    public class CustomMarker : GMarkerGoogle
-    {
-        public string Label { get; set; }
-        public bool IsBold { get; set; }
-        public double Distance { get; set; }
-        public double DistanceMiles { get; set; }
-        public Color MarkerColor { get; set; }
-
-        public CustomMarker(PointLatLng p, string label, bool isBold, double distance, double distanceMiles, Color markerColor) : base(p, GMarkerGoogleType.none)
+        private void pictureBox1_Paint(object sender, PaintEventArgs e)
         {
-            this.Label = label;
-            this.IsBold = isBold;
-            this.Distance = distance;
-            this.DistanceMiles = distanceMiles;
-            this.MarkerColor = markerColor;
+            using (Pen pen = new Pen(Color.Black, 1))
+            {
+                Font font = new Font("Arial", 10);
+                Brush brush = Brushes.Black;
+
+                foreach (var marker in markers)
+                {
+                    foreach (var neighbor in marker.NearestNeighbors)
+                    {
+                        e.Graphics.DrawLine(pen, marker.Position, neighbor.Position);
+
+                        if (!depthfirstSearchToolStripMenuItem.Checked)
+                        {
+                            double distance = GetDistance(marker.Position, neighbor.Position);
+                            Point midPoint = new Point((marker.Position.X + neighbor.Position.X) / 2, (marker.Position.Y + neighbor.Position.Y) / 2);
+                            e.Graphics.DrawString($"{distance:F2}", font, brush, midPoint);
+                        }
+                    }
+                }
+            }
+
+            foreach (var marker in markers)
+            {
+                marker.OnRender(e.Graphics);
+            }
         }
 
-        public override void OnRender(Graphics g)
+        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            int imgWidth = pictureBox1.Image.Width;
+            int imgHeight = pictureBox1.Image.Height;
+            int pbWidth = pictureBox1.ClientSize.Width;
+            int pbHeight = pictureBox1.ClientSize.Height;
+
+            float imgAspect = (float)imgWidth / imgHeight;
+            float pbAspect = (float)pbWidth / pbHeight;
+
+            int imgX, imgY, imgDisplayWidth, imgDisplayHeight;
+
+            if (imgAspect > pbAspect)
+            {
+                imgDisplayWidth = pbWidth;
+                imgDisplayHeight = (int)(pbWidth / imgAspect);
+                imgX = 0;
+                imgY = (pbHeight - imgDisplayHeight) / 2;
+            }
+            else
+            {
+                imgDisplayWidth = (int)(pbHeight * imgAspect);
+                imgDisplayHeight = pbHeight;
+                imgX = (pbWidth - imgDisplayWidth) / 2;
+                imgY = 0;
+            }
+
+            if (e.X >= imgX && e.X <= imgX + imgDisplayWidth && e.Y >= imgY && e.Y <= imgY + imgDisplayHeight)
+            {
+                int imgCoordX = (int)((e.X - imgX) * ((float)imgWidth / imgDisplayWidth));
+                int imgCoordY = (int)((e.Y - imgY) * ((float)imgHeight / imgDisplayHeight));
+                coordinatesLabel.Text = $"X: {imgCoordX}, Y: {imgCoordY}";
+            }
+            else
+            {
+                coordinatesLabel.Text = string.Empty;
+            }
+        }
+
+        private void computeDistanceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked)
+            {
+                MessageBox.Show("Please select a search method (Depth First Search or Breadth First Search) before computing the distance.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string startChar = startCharTextBox.Text;
+            string endChar = endCharTextBox.Text;
+
+            if (string.IsNullOrEmpty(startChar) || string.IsNullOrEmpty(endChar))
+            {
+                MessageBox.Show("Please enter both start and end characters.");
+                return;
+            }
+
+            CustomMarker startMarker = markers.FirstOrDefault(m => m.Label == startChar);
+            CustomMarker endMarker = markers.FirstOrDefault(m => m.Label == endChar);
+
+            if (startMarker == null || endMarker == null)
+            {
+                MessageBox.Show("Invalid start or end character.");
+                return;
+            }
+
+            DrawPathWithDistances(startMarker, endMarker);
+        }
+
+        private bool DepthFirstSearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
+        {
+            Stack<CustomMarker> stack = new Stack<CustomMarker>();
+            HashSet<CustomMarker> visited = new HashSet<CustomMarker>();
+            Dictionary<CustomMarker, CustomMarker> cameFrom = new Dictionary<CustomMarker, CustomMarker>();
+
+            stack.Push(startMarker);
+            cameFrom[startMarker] = null;
+
+            while (stack.Count > 0)
+            {
+                CustomMarker current = stack.Pop();
+                Console.WriteLine($"Visiting Marker: {current.Label}");
+
+                if (current == endMarker)
+                {
+                    while (current != null)
+                    {
+                        path.Insert(0, current);
+                        current = cameFrom[current];
+                    }
+                    return true;
+                }
+
+                if (!visited.Contains(current))
+                {
+                    visited.Add(current);
+
+                    var sortedNeighbors = current.NearestNeighbors.OrderBy(n => n.Position.X).ToList();
+
+                    foreach (var neighbor in sortedNeighbors)
+                    {
+                        if (!visited.Contains(neighbor))
+                        {
+                            Console.WriteLine($"Adding Neighbor: {neighbor.Label}");
+                            stack.Push(neighbor);
+                            if (!cameFrom.ContainsKey(neighbor))
+                            {
+                                cameFrom[neighbor] = current;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool BreadthFirstSearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
+        {
+            if (startMarker == null || endMarker == null)
+            {
+                throw new ArgumentNullException("Start or end marker cannot be null.");
+            }
+
+            Queue<CustomMarker> queue = new Queue<CustomMarker>();
+            Dictionary<CustomMarker, CustomMarker> cameFrom = new Dictionary<CustomMarker, CustomMarker>();
+            HashSet<CustomMarker> visited = new HashSet<CustomMarker>();
+
+            queue.Enqueue(startMarker);
+            cameFrom[startMarker] = null;
+            visited.Add(startMarker);
+
+            while (queue.Count > 0)
+            {
+                CustomMarker current = queue.Dequeue();
+
+                if (current == endMarker)
+                {
+                    while (current != null)
+                    {
+                        path.Insert(0, current);
+                        current = cameFrom[current];
+                    }
+                    return true;
+                }
+
+                foreach (var neighbor in current.NearestNeighbors)
+                {
+                    if (!visited.Contains(neighbor))
+                    {
+                        queue.Enqueue(neighbor);
+                        visited.Add(neighbor);
+                        cameFrom[neighbor] = current;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void DrawPathWithDistances(CustomMarker startMarker, CustomMarker endMarker)
+        {
+            List<CustomMarker> path = new List<CustomMarker>();
+            bool pathFound = false;
+
+            if (depthfirstSearchToolStripMenuItem.Checked)
+            {
+                pathFound = DepthFirstSearch(startMarker, endMarker, path);
+            }
+            else if (breadthToolStripMenuItem.Checked)
+            {
+                pathFound = BreadthFirstSearch(startMarker, endMarker, path);
+            }
+
+            if (!pathFound)
+            {
+                MessageBox.Show("No path found.");
+                return;
+            }
+
+            sequenceOutputTextBox.Text = string.Join("-", path.Select(m => m.Label));
+
+            pictureBox1.Invalidate();
+            pictureBox1.Update();
+
+            using (Graphics g = pictureBox1.CreateGraphics())
+            {
+                Pen redPen = new Pen(Color.Red, 2);
+                Font font = new Font("Arial", 10);
+                Brush redBrush = Brushes.Red;
+
+                for (int i = 0; i < path.Count - 1; i++)
+                {
+                    CustomMarker marker1 = path[i];
+                    CustomMarker marker2 = path[i + 1];
+                    g.DrawLine(redPen, marker1.Position, marker2.Position);
+
+                    if (!depthfirstSearchToolStripMenuItem.Checked)
+                    {
+                        double distance = GetDistance(marker1.Position, marker2.Position);
+                        Point midPoint = new Point((marker1.Position.X + marker2.Position.X) / 2, (marker1.Position.Y + marker2.Position.Y) / 2);
+                        g.DrawString($"{distance:F2}", font, redBrush, midPoint);
+                    }
+                }
+            }
+        }
+
+        private void depthfirstSearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            depthfirstSearchToolStripMenuItem.Checked = true;
+            breadthToolStripMenuItem.Checked = false;
+
+            pictureBox1.Invalidate();
+        }
+
+        private void breadthToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            depthfirstSearchToolStripMenuItem.Checked = false;
+            breadthToolStripMenuItem.Checked = true;
+
+            pictureBox1.Invalidate();
+        }
+
+        private double GetDistance(Point point1, Point point2)
+        {
+            double dx = point2.X - point1.X;
+            double dy = point2.Y - point1.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        private void resetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            markers.Clear();
+            currentLabelIndex = 0;
+            LoadPredefinedData();
+            pictureBox1.Invalidate();
+        }
+    }
+
+    public class CustomMarker
+    {
+        public Point Position { get; set; }
+        public string Label { get; set; }
+        public bool IsBold { get; set; }
+        public Color MarkerColor { get; set; }
+        public List<CustomMarker> NearestNeighbors { get; set; }
+
+        public CustomMarker(Point p, string label, bool isBold, Color markerColor)
+        {
+            this.Position = p;
+            this.Label = label;
+            this.IsBold = isBold;
+            this.MarkerColor = markerColor;
+            this.NearestNeighbors = new List<CustomMarker>();
+        }
+
+        public void OnRender(Graphics g)
         {
             // background circle
             int diameter = 30;
-            Rectangle rect = new Rectangle(LocalPosition.X - diameter / 2, LocalPosition.Y - diameter / 2, diameter, diameter);
-            g.FillEllipse(new SolidBrush(MarkerColor), rect);
+            Rectangle rect = new Rectangle(Position.X - diameter / 2, Position.Y - diameter / 2, diameter, diameter);
+            g.FillEllipse(Brushes.Blue, rect);
 
             // text label centered
             Font font = new Font("Arial", 12, FontStyle.Bold);
             SizeF textSize = g.MeasureString(Label, font);
             PointF textPosition = new PointF(
-                LocalPosition.X - textSize.Width / 2,
-                LocalPosition.Y - textSize.Height / 2
+                Position.X - textSize.Width / 2,
+                Position.Y - textSize.Height / 2
             );
             g.DrawString(Label, font, Brushes.White, textPosition);
-
-            // distance information
-            if (Label != "ME")
-            {
-                string distanceText = $"{Distance:F2} km / {DistanceMiles:F2} mi";
-                Font distanceFont = new Font("Arial", 10);
-                SizeF distanceTextSize = g.MeasureString(distanceText, distanceFont);
-                PointF distanceTextPosition = new PointF(
-                    LocalPosition.X - distanceTextSize.Width / 2,
-                    LocalPosition.Y + diameter / 2
-                );
-                g.DrawString(distanceText, distanceFont, Brushes.Black, distanceTextPosition);
-            }
         }
     }
 }
