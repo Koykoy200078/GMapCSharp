@@ -22,6 +22,7 @@
             this.selectTypesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.depthfirstSearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.breadthToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.bestFirstSearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.computeDistanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startCharTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.endCharTextBox = new System.Windows.Forms.ToolStripTextBox();
@@ -56,7 +57,8 @@
             this.selectTypesToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
             this.selectTypesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.depthfirstSearchToolStripMenuItem,
-            this.breadthToolStripMenuItem});
+            this.breadthToolStripMenuItem,
+            this.bestFirstSearchToolStripMenuItem});
             this.selectTypesToolStripMenuItem.Name = "selectTypesToolStripMenuItem";
             this.selectTypesToolStripMenuItem.Size = new System.Drawing.Size(121, 23);
             this.selectTypesToolStripMenuItem.Text = "Select Search Types";
@@ -74,6 +76,13 @@
             this.breadthToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.breadthToolStripMenuItem.Text = "Breadth-first Search";
             this.breadthToolStripMenuItem.Click += new System.EventHandler(this.breadthToolStripMenuItem_Click);
+            // 
+            // bestFirstSearchToolStripMenuItem
+            // 
+            this.bestFirstSearchToolStripMenuItem.Name = "bestFirstSearchToolStripMenuItem";
+            this.bestFirstSearchToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.bestFirstSearchToolStripMenuItem.Text = "Best First Search";
+            this.bestFirstSearchToolStripMenuItem.Click += new System.EventHandler(this.bestFirstSearchToolStripMenuItem_Click);
             // 
             // computeDistanceToolStripMenuItem
             // 
@@ -172,6 +181,7 @@
         private System.Windows.Forms.ToolStripMenuItem selectTypesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem depthfirstSearchToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem breadthToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem bestFirstSearchToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem resetToolStripMenuItem;
         private System.Windows.Forms.Label coordinatesLabel;
     }

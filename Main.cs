@@ -211,9 +211,9 @@ namespace Map
 
         private void computeDistanceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked)
+            if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked && !bestFirstSearchToolStripMenuItem.Checked)
             {
-                MessageBox.Show("Please select a search method (Depth First Search or Breadth First Search) before computing the distance.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please select a search method (Depth First Search, Breadth First Search, or Best First Search) before computing the distance.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -328,6 +328,98 @@ namespace Map
             return false;
         }
 
+        private bool BestFirstSearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
+        {
+            if (startMarker == null || endMarker == null)
+            {
+                throw new ArgumentNullException("Start or end marker cannot be null.");
+            }
+
+            var visualizer = new BestFirstSearchVisualizer();
+            visualizer.Show();
+
+            var priorityQueue = new SortedDictionary<double, Queue<CustomMarker>>();
+            Dictionary<CustomMarker, CustomMarker> cameFrom = new Dictionary<CustomMarker, CustomMarker>();
+            HashSet<CustomMarker> closedSet = new HashSet<CustomMarker>();
+
+            void Enqueue(CustomMarker item, double priority)
+            {
+                if (!priorityQueue.ContainsKey(priority))
+                {
+                    priorityQueue[priority] = new Queue<CustomMarker>();
+                }
+                priorityQueue[priority].Enqueue(item);
+            }
+
+            CustomMarker Dequeue()
+            {
+                if (priorityQueue.Count == 0)
+                {
+                    throw new InvalidOperationException("The priority queue is empty.");
+                }
+
+                var firstKey = priorityQueue.Keys.First();
+                var queue = priorityQueue[firstKey];
+                var item = queue.Dequeue();
+
+                if (queue.Count == 0)
+                {
+                    priorityQueue.Remove(firstKey);
+                }
+
+                return item;
+            }
+
+            Enqueue(startMarker, 0);
+            cameFrom[startMarker] = null;
+
+            while (priorityQueue.Count > 0)
+            {
+                // Update the OPEN set in the visualizer
+                var openSet = priorityQueue
+                    .SelectMany(kvp => kvp.Value.Select(node => new KeyValuePair<string, double>(node.Label, kvp.Key)))
+                    .ToList();
+                visualizer.UpdateOpenSet(openSet);
+
+                CustomMarker current = Dequeue();
+
+                // Add the current node to the CLOSED set
+                closedSet.Add(current);
+
+                // Update the CLOSED set in the visualizer
+                var closedSetData = closedSet
+                    .Select(node => new KeyValuePair<string, string>(node.Label, cameFrom[node]?.Label))
+                    .ToList();
+                visualizer.UpdateClosedSet(closedSetData);
+
+                if (current == endMarker)
+                {
+                    while (current != null)
+                    {
+                        path.Insert(0, current);
+                        current = cameFrom[current];
+                    }
+                    return true;
+                }
+
+                foreach (var neighbor in current.NearestNeighbors)
+                {
+                    // Neighbor is connected, not already visited, and not in the CLOSED set
+                    if (!closedSet.Contains(neighbor) && current.NearestNeighbors.Contains(neighbor))
+                    {
+                        double priority = GetDistance(neighbor.Position, endMarker.Position);
+                        Enqueue(neighbor, priority);
+                        if (!cameFrom.ContainsKey(neighbor))
+                        {
+                            cameFrom[neighbor] = current;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private void DrawPathWithDistances(CustomMarker startMarker, CustomMarker endMarker)
         {
             List<CustomMarker> path = new List<CustomMarker>();
@@ -340,6 +432,10 @@ namespace Map
             else if (breadthToolStripMenuItem.Checked)
             {
                 pathFound = BreadthFirstSearch(startMarker, endMarker, path);
+            }
+            else if (bestFirstSearchToolStripMenuItem.Checked)
+            {
+                pathFound = BestFirstSearch(startMarker, endMarker, path);
             }
 
             if (!pathFound)
@@ -365,7 +461,8 @@ namespace Map
                     CustomMarker marker2 = path[i + 1];
                     g.DrawLine(redPen, marker1.Position, marker2.Position);
 
-                    if (!depthfirstSearchToolStripMenuItem.Checked)
+                   
+                    if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked && !bestFirstSearchToolStripMenuItem.Checked)
                     {
                         double distance = GetDistance(marker1.Position, marker2.Position);
                         Point midPoint = new Point((marker1.Position.X + marker2.Position.X) / 2, (marker1.Position.Y + marker2.Position.Y) / 2);
@@ -379,6 +476,7 @@ namespace Map
         {
             depthfirstSearchToolStripMenuItem.Checked = true;
             breadthToolStripMenuItem.Checked = false;
+            bestFirstSearchToolStripMenuItem.Checked = false;
 
             pictureBox1.Invalidate();
         }
@@ -387,6 +485,16 @@ namespace Map
         {
             depthfirstSearchToolStripMenuItem.Checked = false;
             breadthToolStripMenuItem.Checked = true;
+            bestFirstSearchToolStripMenuItem.Checked = false;
+
+            pictureBox1.Invalidate();
+        }
+
+        private void bestFirstSearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            bestFirstSearchToolStripMenuItem.Checked = true;
+            depthfirstSearchToolStripMenuItem.Checked = false;
+            breadthToolStripMenuItem.Checked = false;
 
             pictureBox1.Invalidate();
         }

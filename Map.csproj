@@ -83,6 +83,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BestFirstSearchVisualizer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BestFirstSearchVisualizer.Designer.cs">
+      <DependentUpon>BestFirstSearchVisualizer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
