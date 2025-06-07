@@ -23,6 +23,8 @@
             this.depthfirstSearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.breadthToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bestFirstSearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aSearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hillClimbingSearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.computeDistanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startCharTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.endCharTextBox = new System.Windows.Forms.ToolStripTextBox();
@@ -31,6 +33,7 @@
             this.resetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.coordinatesLabel = new System.Windows.Forms.Label();
+            this.greedySearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -58,7 +61,10 @@
             this.selectTypesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.depthfirstSearchToolStripMenuItem,
             this.breadthToolStripMenuItem,
-            this.bestFirstSearchToolStripMenuItem});
+            this.bestFirstSearchToolStripMenuItem,
+            this.aSearchToolStripMenuItem,
+            this.hillClimbingSearchToolStripMenuItem,
+            this.greedySearchToolStripMenuItem});
             this.selectTypesToolStripMenuItem.Name = "selectTypesToolStripMenuItem";
             this.selectTypesToolStripMenuItem.Size = new System.Drawing.Size(121, 23);
             this.selectTypesToolStripMenuItem.Text = "Select Search Types";
@@ -66,23 +72,44 @@
             // depthfirstSearchToolStripMenuItem
             // 
             this.depthfirstSearchToolStripMenuItem.Name = "depthfirstSearchToolStripMenuItem";
-            this.depthfirstSearchToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.depthfirstSearchToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
             this.depthfirstSearchToolStripMenuItem.Text = "Depth-first Search";
             this.depthfirstSearchToolStripMenuItem.Click += new System.EventHandler(this.depthfirstSearchToolStripMenuItem_Click);
             // 
             // breadthToolStripMenuItem
             // 
             this.breadthToolStripMenuItem.Name = "breadthToolStripMenuItem";
-            this.breadthToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.breadthToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
             this.breadthToolStripMenuItem.Text = "Breadth-first Search";
             this.breadthToolStripMenuItem.Click += new System.EventHandler(this.breadthToolStripMenuItem_Click);
             // 
             // bestFirstSearchToolStripMenuItem
             // 
             this.bestFirstSearchToolStripMenuItem.Name = "bestFirstSearchToolStripMenuItem";
-            this.bestFirstSearchToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.bestFirstSearchToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
             this.bestFirstSearchToolStripMenuItem.Text = "Best First Search";
             this.bestFirstSearchToolStripMenuItem.Click += new System.EventHandler(this.bestFirstSearchToolStripMenuItem_Click);
+            // 
+            // aSearchToolStripMenuItem
+            // 
+            this.aSearchToolStripMenuItem.Name = "aSearchToolStripMenuItem";
+            this.aSearchToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.aSearchToolStripMenuItem.Text = "A* Search";
+            this.aSearchToolStripMenuItem.Click += new System.EventHandler(this.aSearchToolStripMenuItem_Click);
+            // 
+            // hillClimbingSearchToolStripMenuItem
+            // 
+            this.hillClimbingSearchToolStripMenuItem.Name = "hillClimbingSearchToolStripMenuItem";
+            this.hillClimbingSearchToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.hillClimbingSearchToolStripMenuItem.Text = "Hill Climbing Search";
+            this.hillClimbingSearchToolStripMenuItem.Click += new System.EventHandler(this.hillClimbingSearchToolStripMenuItem_Click);
+            // 
+            // greedySearchToolStripMenuItem
+            // 
+            this.greedySearchToolStripMenuItem.Name = "greedySearchToolStripMenuItem";
+            this.greedySearchToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+            this.greedySearchToolStripMenuItem.Text = "Greedy Search";
+            this.greedySearchToolStripMenuItem.Click += new System.EventHandler(this.greedySearchToolStripMenuItem_Click);
             // 
             // computeDistanceToolStripMenuItem
             // 
@@ -148,6 +175,7 @@
             this.coordinatesLabel.Size = new System.Drawing.Size(51, 20);
             this.coordinatesLabel.TabIndex = 3;
             this.coordinatesLabel.Text = "label1";
+            
             // 
             // Main
             // 
@@ -159,7 +187,9 @@
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Main";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Main";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.Main_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -184,5 +214,8 @@
         private System.Windows.Forms.ToolStripMenuItem bestFirstSearchToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem resetToolStripMenuItem;
         private System.Windows.Forms.Label coordinatesLabel;
+        private System.Windows.Forms.ToolStripMenuItem aSearchToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem hillClimbingSearchToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem greedySearchToolStripMenuItem;
     }
 }

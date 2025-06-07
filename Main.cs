@@ -13,6 +13,7 @@ namespace Map
         private int currentLabelIndex = 0;
         private List<CustomMarker> markers = new List<CustomMarker>();
 
+
         public Main()
         {
             InitializeComponent();
@@ -211,9 +212,14 @@ namespace Map
 
         private void computeDistanceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked && !bestFirstSearchToolStripMenuItem.Checked)
+            if (!depthfirstSearchToolStripMenuItem.Checked &&
+    !breadthToolStripMenuItem.Checked &&
+    !bestFirstSearchToolStripMenuItem.Checked &&
+    !aSearchToolStripMenuItem.Checked &&
+    !hillClimbingSearchToolStripMenuItem.Checked &&
+    !greedySearchToolStripMenuItem.Checked)
             {
-                MessageBox.Show("Please select a search method (Depth First Search, Breadth First Search, or Best First Search) before computing the distance.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please select a search method (Depth First Search, Breadth First Search, Best First Search, A* Search, Hill Climbing Search, or Greedy Search) before computing the distance.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -420,6 +426,140 @@ namespace Map
             return false;
         }
 
+        private bool AStarSearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
+        {
+            var openSet = new SortedDictionary<double, Queue<CustomMarker>>();
+            var gScore = new Dictionary<CustomMarker, double>();
+            var fScore = new Dictionary<CustomMarker, double>();
+            var cameFrom = new Dictionary<CustomMarker, CustomMarker>();
+            var closedSet = new HashSet<CustomMarker>();
+
+            void Enqueue(CustomMarker node, double priority)
+            {
+                if (!openSet.ContainsKey(priority))
+                    openSet[priority] = new Queue<CustomMarker>();
+                openSet[priority].Enqueue(node);
+            }
+
+            CustomMarker Dequeue()
+            {
+                var firstKey = openSet.Keys.First();
+                var queue = openSet[firstKey];
+                var node = queue.Dequeue();
+                if (queue.Count == 0)
+                    openSet.Remove(firstKey);
+                return node;
+            }
+
+            foreach (var marker in markers)
+            {
+                gScore[marker] = double.PositiveInfinity;
+                fScore[marker] = double.PositiveInfinity;
+            }
+            gScore[startMarker] = 0;
+            fScore[startMarker] = GetDistance(startMarker.Position, endMarker.Position);
+
+            Enqueue(startMarker, fScore[startMarker]);
+            cameFrom[startMarker] = null;
+
+            while (openSet.Count > 0)
+            {
+                CustomMarker current = Dequeue();
+
+                if (current == endMarker)
+                {
+                    while (current != null)
+                    {
+                        path.Insert(0, current);
+                        current = cameFrom[current];
+                    }
+                    return true;
+                }
+
+                closedSet.Add(current);
+
+                foreach (var neighbor in current.NearestNeighbors)
+                {
+                    if (closedSet.Contains(neighbor))
+                        continue;
+
+                    double tentativeGScore = gScore[current] + GetDistance(current.Position, neighbor.Position);
+
+                    if (tentativeGScore < gScore[neighbor])
+                    {
+                        cameFrom[neighbor] = current;
+                        gScore[neighbor] = tentativeGScore;
+                        fScore[neighbor] = tentativeGScore + GetDistance(neighbor.Position, endMarker.Position);
+
+                        // Only enqueue if not already in openSet
+                        bool inOpenSet = openSet.Values.Any(q => q.Contains(neighbor));
+                        if (!inOpenSet)
+                            Enqueue(neighbor, fScore[neighbor]);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool HillClimbingSearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
+        {
+            var current = startMarker;
+            var visited = new HashSet<CustomMarker>();
+            path.Add(current);
+            visited.Add(current);
+
+            while (current != endMarker)
+            {
+                // Select the neighbor closest to the goal (lowest heuristic)
+                var next = current.NearestNeighbors
+                    .Where(n => !visited.Contains(n))
+                    .OrderBy(n => GetDistance(n.Position, endMarker.Position))
+                    .FirstOrDefault();
+
+                if (next == null || GetDistance(next.Position, endMarker.Position) >= GetDistance(current.Position, endMarker.Position))
+                {
+                    // No better neighbor found, stuck at local optimum
+                    return false;
+                }
+
+                current = next;
+                path.Add(current);
+                visited.Add(current);
+            }
+
+            return true;
+        }
+
+        private bool GreedySearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
+        {
+            var current = startMarker;
+            var visited = new HashSet<CustomMarker>();
+            path.Add(current);
+            visited.Add(current);
+
+            while (current != endMarker)
+            {
+                // Select the neighbor with the lowest heuristic (distance to goal)
+                var next = current.NearestNeighbors
+                    .Where(n => !visited.Contains(n))
+                    .OrderBy(n => GetDistance(n.Position, endMarker.Position))
+                    .FirstOrDefault();
+
+                if (next == null)
+                {
+                    // No path found
+                    return false;
+                }
+
+                current = next;
+                path.Add(current);
+                visited.Add(current);
+            }
+
+            return true;
+        }
+
         private void DrawPathWithDistances(CustomMarker startMarker, CustomMarker endMarker)
         {
             List<CustomMarker> path = new List<CustomMarker>();
@@ -436,6 +576,18 @@ namespace Map
             else if (bestFirstSearchToolStripMenuItem.Checked)
             {
                 pathFound = BestFirstSearch(startMarker, endMarker, path);
+            }
+            else if (aSearchToolStripMenuItem.Checked)
+            {
+                pathFound = AStarSearch(startMarker, endMarker, path);
+            }
+            else if (hillClimbingSearchToolStripMenuItem.Checked)
+            {
+                pathFound = HillClimbingSearch(startMarker, endMarker, path);
+            }
+            else if (greedySearchToolStripMenuItem.Checked)
+            {
+                pathFound = GreedySearch(startMarker, endMarker, path);
             }
 
             if (!pathFound)
@@ -461,8 +613,7 @@ namespace Map
                     CustomMarker marker2 = path[i + 1];
                     g.DrawLine(redPen, marker1.Position, marker2.Position);
 
-                   
-                    if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked && !bestFirstSearchToolStripMenuItem.Checked)
+                    if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked && !bestFirstSearchToolStripMenuItem.Checked && !aSearchToolStripMenuItem.Checked && !hillClimbingSearchToolStripMenuItem.Checked && !greedySearchToolStripMenuItem.Checked)
                     {
                         double distance = GetDistance(marker1.Position, marker2.Position);
                         Point midPoint = new Point((marker1.Position.X + marker2.Position.X) / 2, (marker1.Position.Y + marker2.Position.Y) / 2);
@@ -477,6 +628,10 @@ namespace Map
             depthfirstSearchToolStripMenuItem.Checked = true;
             breadthToolStripMenuItem.Checked = false;
             bestFirstSearchToolStripMenuItem.Checked = false;
+            aSearchToolStripMenuItem.Checked = false;
+            hillClimbingSearchToolStripMenuItem.Checked = false;
+            greedySearchToolStripMenuItem.Checked = false; 
+
 
             pictureBox1.Invalidate();
         }
@@ -486,6 +641,9 @@ namespace Map
             depthfirstSearchToolStripMenuItem.Checked = false;
             breadthToolStripMenuItem.Checked = true;
             bestFirstSearchToolStripMenuItem.Checked = false;
+            aSearchToolStripMenuItem.Checked = false;
+            hillClimbingSearchToolStripMenuItem.Checked = false;
+            greedySearchToolStripMenuItem.Checked = false;
 
             pictureBox1.Invalidate();
         }
@@ -495,6 +653,45 @@ namespace Map
             bestFirstSearchToolStripMenuItem.Checked = true;
             depthfirstSearchToolStripMenuItem.Checked = false;
             breadthToolStripMenuItem.Checked = false;
+            aSearchToolStripMenuItem.Checked = false;
+            hillClimbingSearchToolStripMenuItem.Checked = false;
+            greedySearchToolStripMenuItem.Checked = false;
+
+            pictureBox1.Invalidate();
+        }
+
+        private void aSearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            depthfirstSearchToolStripMenuItem.Checked = false;
+            breadthToolStripMenuItem.Checked = false;
+            bestFirstSearchToolStripMenuItem.Checked = false;
+            aSearchToolStripMenuItem.Checked = true;
+            hillClimbingSearchToolStripMenuItem.Checked = false;
+            greedySearchToolStripMenuItem.Checked = false;
+
+            pictureBox1.Invalidate();
+        }
+
+        private void hillClimbingSearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            depthfirstSearchToolStripMenuItem.Checked = false;
+            breadthToolStripMenuItem.Checked = false;
+            bestFirstSearchToolStripMenuItem.Checked = false;
+            aSearchToolStripMenuItem.Checked = false;
+            hillClimbingSearchToolStripMenuItem.Checked = true;
+            greedySearchToolStripMenuItem.Checked = false;
+
+            pictureBox1.Invalidate();
+        }
+
+        private void greedySearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            depthfirstSearchToolStripMenuItem.Checked = false;
+            breadthToolStripMenuItem.Checked = false;
+            bestFirstSearchToolStripMenuItem.Checked = false;
+            aSearchToolStripMenuItem.Checked = false;
+            hillClimbingSearchToolStripMenuItem.Checked = false;
+            greedySearchToolStripMenuItem.Checked = true;
 
             pictureBox1.Invalidate();
         }
