@@ -77,7 +77,8 @@ namespace Map
                     currentLabelIndex++;
                 }
 
-                // Initial connections
+                // Initial connections - Create bidirectional k-nearest neighbor graph
+                // First, find each node's k nearest neighbors
                 foreach (var marker in markers)
                 {
                     marker.NearestNeighbors = markers
@@ -85,9 +86,14 @@ namespace Map
                         .OrderBy(m => GetDistance(marker.Position, m.Position))
                         .Take(3)
                         .ToList();
+                }
 
-                    foreach (var neighbor in marker.NearestNeighbors)
+                // Then, make all connections bidirectional
+                foreach (var marker in markers)
+                {
+                    foreach (var neighbor in marker.NearestNeighbors.ToList()) // ToList() to avoid modification during iteration
                     {
+                        // If neighbor doesn't have marker in its list, add it to ensure bidirectional connection
                         if (!neighbor.NearestNeighbors.Contains(marker))
                         {
                             neighbor.NearestNeighbors.Add(marker);
@@ -123,6 +129,23 @@ namespace Map
                     }
                 }
 
+                // Debug: Print graph statistics
+                Console.WriteLine("\n=== GRAPH CONSTRUCTION COMPLETE ===");
+                Console.WriteLine($"Total nodes: {markers.Count}");
+                Console.WriteLine($"Nodes with connections:");
+                foreach (var marker in markers)
+                {
+                    Console.WriteLine($"  Node {marker.Label}: {marker.NearestNeighbors.Count} neighbors -> {string.Join(", ", marker.NearestNeighbors.Select(n => n.Label))}");
+                }
+                
+                // Check for isolated nodes
+                var isolatedNodes = markers.Where(m => m.NearestNeighbors.Count == 0).ToList();
+                if (isolatedNodes.Any())
+                {
+                    Console.WriteLine($"\nWARNING: {isolatedNodes.Count} isolated nodes found: {string.Join(", ", isolatedNodes.Select(n => n.Label))}");
+                }
+                Console.WriteLine("====================================\n");
+
                 pictureBox1.Invalidate();
             }
         }
@@ -149,17 +172,25 @@ namespace Map
                 Font font = new Font("Arial", 10);
                 Brush brush = Brushes.Black;
 
+                // Track drawn edges to avoid duplicates (since graph is bidirectional)
+                HashSet<(CustomMarker, CustomMarker)> drawnEdges = new HashSet<(CustomMarker, CustomMarker)>();
+
                 foreach (var marker in markers)
                 {
                     foreach (var neighbor in marker.NearestNeighbors)
                     {
-                        e.Graphics.DrawLine(pen, marker.Position, neighbor.Position);
-
-                        if (!depthfirstSearchToolStripMenuItem.Checked)
+                        // Only draw each edge once (check both directions)
+                        if (!drawnEdges.Contains((marker, neighbor)) && !drawnEdges.Contains((neighbor, marker)))
                         {
-                            double distance = GetDistance(marker.Position, neighbor.Position);
-                            Point midPoint = new Point((marker.Position.X + neighbor.Position.X) / 2, (marker.Position.Y + neighbor.Position.Y) / 2);
-                            e.Graphics.DrawString($"{distance:F2}", font, brush, midPoint);
+                            e.Graphics.DrawLine(pen, marker.Position, neighbor.Position);
+                            drawnEdges.Add((marker, neighbor));
+
+                            if (!depthfirstSearchToolStripMenuItem.Checked)
+                            {
+                                double distance = GetDistance(marker.Position, neighbor.Position);
+                                Point midPoint = new Point((marker.Position.X + neighbor.Position.X) / 2, (marker.Position.Y + neighbor.Position.Y) / 2);
+                                e.Graphics.DrawString($"{distance:F2}", font, brush, midPoint);
+                            }
                         }
                     }
                 }
@@ -241,6 +272,14 @@ namespace Map
                 return;
             }
 
+            // Debug: Log connectivity information
+            Console.WriteLine($"\n=== PATHFINDING DEBUG ===");
+            Console.WriteLine($"Start: {startMarker.Label} (Neighbors: {string.Join(", ", startMarker.NearestNeighbors.Select(n => n.Label))})");
+            Console.WriteLine($"End: {endMarker.Label} (Neighbors: {string.Join(", ", endMarker.NearestNeighbors.Select(n => n.Label))})");
+            Console.WriteLine($"Total nodes: {markers.Count}");
+            Console.WriteLine($"Total connections: {markers.Sum(m => m.NearestNeighbors.Count) / 2}");
+            Console.WriteLine("=========================\n");
+
             DrawPathWithDistances(startMarker, endMarker);
         }
 
@@ -256,6 +295,11 @@ namespace Map
             while (stack.Count > 0)
             {
                 CustomMarker current = stack.Pop();
+                
+                if (visited.Contains(current))
+                    continue;
+                    
+                visited.Add(current);
                 Console.WriteLine($"Visiting Marker: {current.Label}");
 
                 if (current == endMarker)
@@ -268,23 +312,15 @@ namespace Map
                     return true;
                 }
 
-                if (!visited.Contains(current))
+                var sortedNeighbors = current.NearestNeighbors.OrderBy(n => n.Position.X).ToList();
+
+                foreach (var neighbor in sortedNeighbors)
                 {
-                    visited.Add(current);
-
-                    var sortedNeighbors = current.NearestNeighbors.OrderBy(n => n.Position.X).ToList();
-
-                    foreach (var neighbor in sortedNeighbors)
+                    if (!visited.Contains(neighbor) && !cameFrom.ContainsKey(neighbor))
                     {
-                        if (!visited.Contains(neighbor))
-                        {
-                            Console.WriteLine($"Adding Neighbor: {neighbor.Label}");
-                            stack.Push(neighbor);
-                            if (!cameFrom.ContainsKey(neighbor))
-                            {
-                                cameFrom[neighbor] = current;
-                            }
-                        }
+                        Console.WriteLine($"Adding Neighbor: {neighbor.Label}");
+                        stack.Push(neighbor);
+                        cameFrom[neighbor] = current;
                     }
                 }
             }
@@ -306,13 +342,17 @@ namespace Map
             queue.Enqueue(startMarker);
             cameFrom[startMarker] = null;
             visited.Add(startMarker);
+            
+            Console.WriteLine($"BFS: Starting from {startMarker.Label}, searching for {endMarker.Label}");
 
             while (queue.Count > 0)
             {
                 CustomMarker current = queue.Dequeue();
+                Console.WriteLine($"BFS: Visiting {current.Label}, Neighbors: {string.Join(", ", current.NearestNeighbors.Select(n => n.Label))}");
 
                 if (current == endMarker)
                 {
+                    Console.WriteLine($"BFS: Found path to {endMarker.Label}!");
                     while (current != null)
                     {
                         path.Insert(0, current);
@@ -325,12 +365,14 @@ namespace Map
                 {
                     if (!visited.Contains(neighbor))
                     {
+                        Console.WriteLine($"BFS: Enqueueing {neighbor.Label} from {current.Label}");
                         queue.Enqueue(neighbor);
                         visited.Add(neighbor);
                         cameFrom[neighbor] = current;
                     }
                 }
             }
+            Console.WriteLine($"BFS: No path found. Visited {visited.Count} nodes.");
             return false;
         }
 
@@ -389,6 +431,10 @@ namespace Map
 
                 CustomMarker current = Dequeue();
 
+                // Skip if already processed (can be in queue multiple times)
+                if (closedSet.Contains(current))
+                    continue;
+
                 // Add the current node to the CLOSED set
                 closedSet.Add(current);
 
@@ -410,15 +456,12 @@ namespace Map
 
                 foreach (var neighbor in current.NearestNeighbors)
                 {
-                    // Neighbor is connected, not already visited, and not in the CLOSED set
-                    if (!closedSet.Contains(neighbor) && current.NearestNeighbors.Contains(neighbor))
+                    // Check if neighbor is not in closed set and connection is valid
+                    if (!closedSet.Contains(neighbor) && !cameFrom.ContainsKey(neighbor))
                     {
                         double priority = GetDistance(neighbor.Position, endMarker.Position);
                         Enqueue(neighbor, priority);
-                        if (!cameFrom.ContainsKey(neighbor))
-                        {
-                            cameFrom[neighbor] = current;
-                        }
+                        cameFrom[neighbor] = current;
                     }
                 }
             }
@@ -504,60 +547,133 @@ namespace Map
 
         private bool HillClimbingSearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
         {
-            var current = startMarker;
-            var visited = new HashSet<CustomMarker>();
-            path.Add(current);
-            visited.Add(current);
-
-            while (current != endMarker)
+            // Hill Climbing with Random Restart - tries multiple times if stuck at local optimum
+            int maxRestarts = 5;
+            Random random = new Random();
+            
+            for (int restart = 0; restart < maxRestarts; restart++)
             {
-                // Select the neighbor closest to the goal (lowest heuristic)
-                var next = current.NearestNeighbors
-                    .Where(n => !visited.Contains(n))
-                    .OrderBy(n => GetDistance(n.Position, endMarker.Position))
-                    .FirstOrDefault();
-
-                if (next == null || GetDistance(next.Position, endMarker.Position) >= GetDistance(current.Position, endMarker.Position))
-                {
-                    // No better neighbor found, stuck at local optimum
-                    return false;
-                }
-
-                current = next;
+                path.Clear();
+                var current = startMarker;
+                var visited = new HashSet<CustomMarker>();
                 path.Add(current);
                 visited.Add(current);
+                
+                while (current != endMarker)
+                {
+                    // Select the neighbor closest to the goal (steepest ascent/descent)
+                    var neighbors = current.NearestNeighbors
+                        .Where(n => !visited.Contains(n))
+                        .OrderBy(n => GetDistance(n.Position, endMarker.Position))
+                        .ToList();
+                    
+                    if (neighbors.Count == 0)
+                    {
+                        // Dead end - no unvisited neighbors
+                        break;
+                    }
+                    
+                    var best = neighbors.First();
+                    double currentDist = GetDistance(current.Position, endMarker.Position);
+                    double bestDist = GetDistance(best.Position, endMarker.Position);
+                    
+                    if (bestDist >= currentDist)
+                    {
+                        // Stuck at local optimum - try sideways move with probability
+                        if (restart < maxRestarts - 1 && neighbors.Count > 1)
+                        {
+                            // Allow sideways/plateau moves on non-final attempts
+                            var sidewaysNeighbor = neighbors.FirstOrDefault(n => 
+                                Math.Abs(GetDistance(n.Position, endMarker.Position) - currentDist) < 50);
+                            if (sidewaysNeighbor != null)
+                            {
+                                current = sidewaysNeighbor;
+                                path.Add(current);
+                                visited.Add(current);
+                                continue;
+                            }
+                        }
+                        break; // No improvement possible
+                    }
+                    
+                    current = best;
+                    path.Add(current);
+                    visited.Add(current);
+                }
+                
+                if (current == endMarker)
+                {
+                    return true; // Found path!
+                }
             }
-
-            return true;
+            
+            return false; // Failed after all restarts
         }
 
         private bool GreedySearch(CustomMarker startMarker, CustomMarker endMarker, List<CustomMarker> path)
         {
-            var current = startMarker;
+            // Greedy Best-First Search using priority queue (h(n) only, no g(n))
+            // Unlike A*, it only considers heuristic distance to goal
+            // Unlike simple Hill Climbing, it maintains a frontier and can backtrack
+            
+            var priorityQueue = new SortedDictionary<double, Queue<CustomMarker>>();
+            var cameFrom = new Dictionary<CustomMarker, CustomMarker>();
             var visited = new HashSet<CustomMarker>();
-            path.Add(current);
-            visited.Add(current);
-
-            while (current != endMarker)
+            
+            void Enqueue(CustomMarker node, double priority)
             {
-                // Select the neighbor with the lowest heuristic (distance to goal)
-                var next = current.NearestNeighbors
-                    .Where(n => !visited.Contains(n))
-                    .OrderBy(n => GetDistance(n.Position, endMarker.Position))
-                    .FirstOrDefault();
-
-                if (next == null)
-                {
-                    // No path found
-                    return false;
-                }
-
-                current = next;
-                path.Add(current);
-                visited.Add(current);
+                if (!priorityQueue.ContainsKey(priority))
+                    priorityQueue[priority] = new Queue<CustomMarker>();
+                priorityQueue[priority].Enqueue(node);
             }
-
-            return true;
+            
+            CustomMarker Dequeue()
+            {
+                var firstKey = priorityQueue.Keys.First();
+                var queue = priorityQueue[firstKey];
+                var node = queue.Dequeue();
+                if (queue.Count == 0)
+                    priorityQueue.Remove(firstKey);
+                return node;
+            }
+            
+            // h(n) = straight-line distance to goal
+            double Heuristic(CustomMarker node) => GetDistance(node.Position, endMarker.Position);
+            
+            Enqueue(startMarker, Heuristic(startMarker));
+            cameFrom[startMarker] = null;
+            
+            while (priorityQueue.Count > 0)
+            {
+                var current = Dequeue();
+                
+                if (visited.Contains(current))
+                    continue;
+                    
+                visited.Add(current);
+                
+                if (current == endMarker)
+                {
+                    // Reconstruct path
+                    while (current != null)
+                    {
+                        path.Insert(0, current);
+                        current = cameFrom[current];
+                    }
+                    return true;
+                }
+                
+                foreach (var neighbor in current.NearestNeighbors)
+                {
+                    if (!visited.Contains(neighbor) && !cameFrom.ContainsKey(neighbor))
+                    {
+                        cameFrom[neighbor] = current;
+                        Enqueue(neighbor, Heuristic(neighbor));
+                    }
+                }
+            }
+            
+            return false;
         }
 
         private void DrawPathWithDistances(CustomMarker startMarker, CustomMarker endMarker)
@@ -592,7 +708,12 @@ namespace Map
 
             if (!pathFound)
             {
-                MessageBox.Show("No path found.");
+                string algorithm = depthfirstSearchToolStripMenuItem.Checked ? "DFS" :
+                                 breadthToolStripMenuItem.Checked ? "BFS" :
+                                 bestFirstSearchToolStripMenuItem.Checked ? "Best First" :
+                                 aSearchToolStripMenuItem.Checked ? "A*" :
+                                 hillClimbingSearchToolStripMenuItem.Checked ? "Hill Climbing" : "Greedy";
+                MessageBox.Show($"No path found using {algorithm}.\n\nDebug Info:\nStart: {startMarker.Label} (Neighbors: {startMarker.NearestNeighbors.Count})\nEnd: {endMarker.Label} (Neighbors: {endMarker.NearestNeighbors.Count})\n\nCheck the console output for detailed search trace.", "Path Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -613,7 +734,8 @@ namespace Map
                     CustomMarker marker2 = path[i + 1];
                     g.DrawLine(redPen, marker1.Position, marker2.Position);
 
-                    if (!depthfirstSearchToolStripMenuItem.Checked && !breadthToolStripMenuItem.Checked && !bestFirstSearchToolStripMenuItem.Checked && !aSearchToolStripMenuItem.Checked && !hillClimbingSearchToolStripMenuItem.Checked && !greedySearchToolStripMenuItem.Checked)
+                    // Always show distance on the path for informed search algorithms
+                    if (bestFirstSearchToolStripMenuItem.Checked || aSearchToolStripMenuItem.Checked || hillClimbingSearchToolStripMenuItem.Checked || greedySearchToolStripMenuItem.Checked)
                     {
                         double distance = GetDistance(marker1.Position, marker2.Position);
                         Point midPoint = new Point((marker1.Position.X + marker2.Position.X) / 2, (marker1.Position.Y + marker2.Position.Y) / 2);
